@@ -1,0 +1,14 @@
+# Node 依赖
+node_modules/
+
+# 运行时数据（SQLite 数据库）
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# 日志
+*.log
+
+# 系统
+.DS_Store

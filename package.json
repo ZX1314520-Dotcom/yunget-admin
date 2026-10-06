@@ -1,0 +1,18 @@
+{
+  "name": "yunget-admin",
+  "version": "1.0.0",
+  "description": "YunGet 管理后台：设备注册/心跳、任务上报、Web 管理界面",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "better-sqlite3": "^11.3.0"
+  }
+}

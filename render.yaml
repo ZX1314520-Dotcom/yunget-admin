@@ -1,0 +1,14 @@
+# Render Blueprint 配置 —— YunGet 管理后台
+# 部署：登录 render.com → New → Blueprint → 选择本仓库，Render 会自动按此文件创建服务
+services:
+  - type: web
+    name: yunget-admin
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
