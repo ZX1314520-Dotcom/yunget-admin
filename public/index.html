@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YunGet 管理后台</title>
+<style>
+  :root{--bg:#0f1115;--panel:#1a1d24;--panel2:#232733;--line:#2c3140;--text:#e8eaf0;--muted:#8b92a5;--accent:#4f8cff;--accent2:#7c5cff;--ok:#3fb950;--warn:#d29922;--err:#f85149;--down:#58a6ff;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.5}
+  .app{display:flex;min-height:100vh}
+  .sidebar{width:220px;background:var(--panel);border-right:1px solid var(--line);padding:20px 14px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}
+  .brand .name{font-weight:700;font-size:16px}
+  .brand .sub{font-size:11px;color:var(--muted)}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav button{background:none;border:none;color:var(--muted);text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;transition:.15s}
+  .nav button:hover{background:var(--panel2);color:var(--text)}
+  .nav button.active{background:linear-gradient(90deg,rgba(79,140,255,.18),rgba(124,92,255,.18));color:var(--accent);font-weight:600}
+  .nav .ico{width:18px;text-align:center;font-size:16px}
+  .sidenote{position:sticky;bottom:0;margin-top:24px;padding:12px;background:var(--panel2);border-radius:10px;font-size:12px;color:var(--muted)}
+  .main{flex:1;padding:24px 28px;overflow-x:auto}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .topbar h1{font-size:20px;font-weight:700}
+  .topbar .right{display:flex;gap:10px;align-items:center}
+  .live{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);padding:6px 12px;border-radius:20px;font-size:12px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .stat{padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+  .stat .label{font-size:12px;color:var(--muted)}
+  .stat .num{font-size:26px;font-weight:700;margin-top:4px}
+  .stat .num.ok{color:var(--ok)}.stat .num.down{color:var(--down)}.stat .num.warn{color:var(--warn)}.stat .num.err{color:var(--err)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}
+  th{color:var(--muted);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--panel)}
+  tr:hover td{background:var(--panel2)}
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .b-on{background:rgba(63,185,80,.15);color:var(--ok)}
+  .b-off{background:rgba(139,146,165,.15);color:var(--muted)}
+  .b-ban{background:rgba(248,81,73,.15);color:var(--err)}
+  .b-dl{background:rgba(88,166,255,.15);color:var(--down)}
+  .b-done{background:rgba(63,185,80,.15);color:var(--ok)}
+  .b-pend{background:rgba(210,153,34,.18);color:var(--warn)}
+  .b-fail{background:rgba(248,81,73,.15);color:var(--err)}
+  .b-paus{background:rgba(139,146,165,.2);color:var(--muted)}
+  .prog{height:6px;background:var(--panel2);border-radius:6px;overflow:hidden;min-width:100px}
+  .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:.15s}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.danger:hover{border-color:var(--err);color:var(--err)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{opacity:.85;color:#fff}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  input,select{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 11px;border-radius:8px;font-size:13px;outline:none}
+  input:focus,select:focus{border-color:var(--accent)}
+  .muted{color:var(--muted)}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+  .field{margin-bottom:12px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field textarea{width:100%;max-width:420px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .toast{position:fixed;top:18px;right:18px;background:var(--panel2);border:1px solid var(--accent);padding:12px 18px;border-radius:10px;z-index:99;opacity:0;transform:translateY(-10px);transition:.25s}
+  .toast.show{opacity:1;transform:none}
+  .toast.err{border-color:var(--err)}
+  @media(max-width:760px){.sidebar{width:64px}.sidebar .brand .name,.sidebar .brand .sub,.nav button span:last-child{display:none}.main{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">云</div><div><div class="name">YunGet</div><div class="sub">管理后台</div></div></div>
+    <nav class="nav">
+      <button data-view="dash" class="active"><span class="ico">◈</span><span>仪表盘</span></button>
+      <button data-view="devices"><span class="ico">▣</span><span>设备</span></button>
+      <button data-view="tasks"><span class="ico">⇩</span><span>下载任务</span></button>
+      <button data-view="accounts"><span class="ico">◎</span><span>网盘账号</span></button>
+      <button data-view="settings"><span class="ico">⚙</span><span>设置</span></button>
+    </nav>
+    <div class="sidenote">设备上报接口<br><span class="mono">POST /api/device/*</span><br><br>管理接口需<br><span class="mono">X-Admin-Token</span></div>
+  </aside>
+  <main class="main">
+    <div class="topbar"><h1 id="pageTitle">仪表盘</h1><div class="right"><div class="live"><span class="dot"></span>自动刷新</div></div></div>
+    <section id="view-dash">
+      <div class="grid g4" id="dashStats"></div>
+      <div class="card"><h3 style="margin-bottom:12px;font-size:15px">最近设备</h3><div style="overflow-x:auto"><table><thead><tr><th>设备</th><th>型号</th><th>应用版本</th><th>IP</th><th>状态</th><th>最近在线</th></tr></thead><tbody id="dashDevices"></tbody></table></div></div>
+    </section>
+    <section id="view-devices" style="display:none">
+      <div class="filters"><input id="devSearch" placeholder="搜索设备名/ID..."><button class="btn primary" onclick="loadDevices()">刷新</button></div>
+      <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>设备名</th><th>型号</th><th>Android</th><th>应用版本</th><th>IP</th><th>状态</th><th>注册时间</th><th>最近在线</th><th>操作</th></tr></thead><tbody id="devBody"></tbody></table></div></div>
+    </section>
+    <section id="view-tasks" style="display:none">
+      <div class="filters">
+        <select id="taskStatus"><option value="">全部状态</option><option value="downloading">下载中</option><option value="pending">等待中</option><option value="queued">排队</option><option value="paused">已暂停</option><option value="completed">已完成</option><option value="failed">失败</option><option value="canceled">已取消</option></select>
+        <input id="taskSearch" placeholder="搜索文件名/设备ID..."><button class="btn primary" onclick="loadTasks()">刷新</button>
+      </div>
+      <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>文件名</th><th>设备</th><th>来源</th><th>大小</th><th>进度</th><th>速度</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="taskBody"></tbody></table></div></div>
+    </section>
+    <section id="view-accounts" style="display:none">
+      <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>设备</th><th>平台</th><th>账号</th><th>状态</th><th>更新时间</th></tr></thead><tbody id="accBody"></tbody></table></div></div>
+    </section>
+    <section id="view-settings" style="display:none">
+      <div class="card" style="max-width:560px">
+        <h3 style="margin-bottom:16px;font-size:15px">后台配置</h3>
+        <div class="field"><label>服务器名称</label><input id="set_server_name" placeholder="YunGet 管理后台"></div>
+        <div class="field"><label>管理令牌（留空 = 公开访问）</label><input id="set_admin_token" placeholder="设置后管理界面与写操作需鉴权"></div>
+        <div class="field"><label>最大设备数</label><input id="set_max_devices" placeholder="1000"></div>
+        <div class="field"><label>任务保留天数</label><input id="set_task_ttl_days" placeholder="30"></div>
+        <button class="btn primary" onclick="saveSettings()">保存配置</button>
+        <p class="muted" style="margin-top:14px;font-size:12px">提示：修改令牌后，浏览器当前会话需刷新并携带新令牌访问管理接口。</p>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);let VIEW='dash';let ADMIN_TOKEN=localStorage.getItem('admin_token')||'';
+function toast(msg,err=false){const t=$('#toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',2200);}
+async function api(path,opts={}){const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});if(ADMIN_TOKEN)headers['X-Admin-Token']=ADMIN_TOKEN;const r=await fetch(path,Object.assign({},opts,{headers}));const j=await r.json().catch(()=>({code:-1}));if(r.status===401){toast('未授权：请在设置页填写正确的管理令牌',true);}return j;}
+function fmtBytes(n){if(n==null||isNaN(n))return'-';const u=['B','KB','MB','GB','TB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return(i===0?n:n.toFixed(1))+' '+u[i];}
+function fmtSpeed(n){return fmtBytes(n)+'/s';}
+function fmtTime(ms){if(!ms)return'-';const d=new Date(ms);const now=Date.now();const diff=now-ms;if(diff<60*1000)return Math.round(diff/1000)+'秒前';if(diff<3600*1000)return Math.round(diff/60000)+'分钟前';if(diff<24*3600*1000)return Math.round(diff/3600000)+'小时前';return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function badge(kind,text){const map={'online':'b-on','offline':'b-off','banned':'b-ban','downloading':'b-dl','completed':'b-done','pending':'b-pend','queued':'b-pend','paused':'b-paus','failed':'b-fail','canceled':'b-paus'};return`<span class="badge ${map[kind]||'b-pend'}">${text||kind}</span>`;}
+const statusCN={online:'在线',offline:'离线',banned:'已禁用',downloading:'下载中',completed:'已完成',pending:'等待中',queued:'排队',paused:'已暂停',failed:'失败',canceled:'已取消'};
+document.querySelectorAll('.nav button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');VIEW=b.dataset.view;const titles={dash:'仪表盘',devices:'设备',tasks:'下载任务',accounts:'网盘账号',settings:'设置'};$('#pageTitle').textContent=titles[VIEW];['dash','devices','tasks','accounts','settings'].forEach(v=>$('#view-'+v).style.display=v===VIEW?'':'none');load();};});
+async function loadDash(){const j=await api('/api/admin/stats');if(!j||j.code!==0)return;const s=j.stats;$('#dashStats').innerHTML=`<div class="stat"><div class="label">在线设备</div><div class="num ok">${s.online}</div></div><div class="stat"><div class="label">总设备</div><div class="num">${s.totalDevices}</div></div><div class="stat"><div class="label">进行中任务</div><div class="num down">${s.activeTasks}</div></div><div class="stat"><div class="label">累计任务</div><div class="num">${s.totalTasks}</div></div><div class="stat"><div class="label">已完成</div><div class="num ok">${s.completed}</div></div><div class="stat"><div class="label">失败</div><div class="num err">${s.failed}</div></div><div class="stat"><div class="label">累计下载</div><div class="num">${fmtBytes(s.downloadedBytes)}</div></div>`;const dj=await api('/api/admin/devices');if(dj&&dj.code===0){$('#dashDevices').innerHTML=dj.devices.slice(0,8).map(d=>`<tr><td>${esc(d.name)||esc(d.id.slice(0,8))}</td><td class="muted">${esc(d.model)}</td><td class="muted">${esc(d.app_ver)}</td><td class="mono">${esc(d.ip)}</td><td>${badge(d.status,statusCN[d.status]||d.status)}</td><td class="muted">${fmtTime(d.last_seen_at)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">暂无设备</td></tr>';}}
+async function loadDevices(){const j=await api('/api/admin/devices');if(!j||j.code!==0)return;const q=($('#devSearch').value||'').toLowerCase();const list=j.devices.filter(d=>!q||d.name.toLowerCase().includes(q)||d.id.toLowerCase().includes(q));$('#devBody').innerHTML=list.map(d=>`<tr><td class="mono">${esc(d.id)}</td><td>${esc(d.name)||'<span class="muted">未命名</span>'}</td><td class="muted">${esc(d.model)}</td><td class="muted">${esc(d.android_ver)}</td><td class="muted">${esc(d.app_ver)}</td><td class="mono">${esc(d.ip)}</td><td>${badge(d.status,statusCN[d.status]||d.status)}</td><td class="muted">${fmtTime(d.first_seen_at)}</td><td class="muted">${fmtTime(d.last_seen_at)}</td><td><button class="btn" onclick="setDevStatus('${d.id}','${d.status==='banned'?'online':'banned'}')">${d.status==='banned'?'解禁':'禁用'}</button><button class="btn danger" onclick="delDevice('${d.id}')">删除</button></td></tr>`).join('')||'<tr><td colspan="10" class="empty">暂无设备</td></tr>';}
+async function setDevStatus(id,status){const j=await api('/api/admin/device/'+id,{method:'POST',body:JSON.stringify({status})});if(j.code===0){toast(status==='banned'?'已禁用':'已解禁');loadDevices();}}
+async function delDevice(id){if(!confirm('确认删除该设备及其所有任务/账号？'))return;const j=await api('/api/admin/device/'+id,{method:'DELETE'});if(j.code===0){toast('已删除');loadDevices();loadDash();}}
+async function loadTasks(){const st=$('#taskStatus').value;const q=($('#taskSearch').value||'').toLowerCase();const url='/api/admin/tasks?pageSize=200'+(st?'&status='+st:'');const j=await api(url);if(!j||j.code!==0)return;const list=j.tasks.filter(t=>!q||t.file_name.toLowerCase().includes(q)||t.device_id.toLowerCase().includes(q));$('#taskBody').innerHTML=list.map(t=>{const pct=Math.min(100,t.progress||0);return`<tr><td>${esc(t.file_name)||'<span class="muted">未命名</span>'}</td><td class="mono muted">${esc(t.device_id.slice(0,8))}</td><td>${tagMap(t.source_pan)}</td><td class="muted">${fmtBytes(t.size)}</td><td><div class="prog" style="width:90px"><i style="width:${pct}%"></i></div><span class="muted" style="font-size:11px">${pct.toFixed(0)}%</span></td><td class="down">${t.status==='downloading'?fmtSpeed(t.speed):'-'}</td><td>${badge(t.status,statusCN[t.status]||t.status)}</td><td class="muted">${fmtTime(t.updated_at)}</td><td><button class="btn danger" onclick="delTask('${t.id}')">删除</button></td></tr>`;}).join('')||'<tr><td colspan="9" class="empty">暂无任务</td></tr>';}
+function tagMap(p){const m={quark:'夸克',uc:'UC',xunlei:'迅雷',baidu:'百度',123:'123云盘',139:'139网盘',direct:'直链',hls:'HLS'};return p?`<span class="tag">${m[p]||p}</span>`:'<span class="muted">-</span>';}
+async function delTask(id){if(!confirm('删除该任务记录？'))return;const j=await api('/api/admin/task/'+id,{method:'DELETE'});if(j.code===0){toast('已删除');loadTasks();}}
+async function loadAccounts(){const j=await api('/api/admin/accounts');if(!j||j.code!==0)return;const m={quark:'夸克',uc:'UC',xunlei:'迅雷',baidu:'百度',123:'123云盘',139:'139网盘'};$('#accBody').innerHTML=j.accounts.map(a=>`<tr><td class="mono muted">${esc(a.device_id.slice(0,8))}</td><td>${m[a.platform]||esc(a.platform)}</td><td>${esc(a.account_name)||'<span class="muted">-</span>'}</td><td>${a.logged_in?badge('online','已登录'):badge('offline','未登录')}</td><td class="muted">${fmtTime(a.updated_at)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">暂无账号上报</td></tr>';}
+async function loadSettings(){const j=await api('/api/admin/settings');if(!j||j.code!==0)return;$('#set_server_name').value=j.settings.server_name||'';$('#set_admin_token').value=j.settings.admin_token||'';$('#set_max_devices').value=j.settings.max_devices||'';$('#set_task_ttl_days').value=j.settings.task_ttl_days||'';}
+async function saveSettings(){const payload={server_name:$('#set_server_name').value,admin_token:$('#set_admin_token').value,max_devices:$('#set_max_devices').value,task_ttl_days:$('#set_task_ttl_days').value};const j=await api('/api/admin/settings',{method:'POST',body:JSON.stringify(payload)});if(j.code===0){toast('配置已保存');if(payload.admin_token)ADMIN_TOKEN=payload.admin_token;}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+function load(){if(VIEW==='dash')loadDash();else if(VIEW==='devices')loadDevices();else if(VIEW==='tasks')loadTasks();else if(VIEW==='accounts')loadAccounts();else if(VIEW==='settings')loadSettings();}
+load();setInterval(()=>{if(VIEW==='dash'||VIEW==='devices')load();},8000);document.addEventListener('keydown',e=>{if(e.key==='t'&&e.ctrlKey){const t=prompt('设置管理令牌：');if(t){ADMIN_TOKEN=t;localStorage.setItem('admin_token',t);load();}}});
+</script>
+</body>
+</html>
